@@ -15,11 +15,19 @@ abstract public class Operation implements Callable<Boolean> {
         Operation operation;
         switch (cmd){
             case DISCONNECT_WS:
-                operation = new DisconnectWorkspace();
+                operation = new Disconnect();
                 break;
 
             case SEND_MSG:
                 operation = new SendMessage();
+                break;
+
+            case GET_CHATS:
+                operation = new GetChats();
+                break;
+
+            case GET_MESSAGES:
+                operation = new GetMessages();
                 break;
 
             default:

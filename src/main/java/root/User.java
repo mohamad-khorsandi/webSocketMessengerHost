@@ -8,7 +8,7 @@ import java.util.Scanner;
 public class User {
     public String username;
     public Integer id;
-    Workspace workspace;
+    public Workspace workspace;
     public Scanner receive;
     public AutoFormatter send;
 

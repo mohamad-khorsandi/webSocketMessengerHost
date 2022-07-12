@@ -1,6 +1,6 @@
 package root.operation;
 
-public class DisconnectWorkspace extends Operation{
+public class Disconnect extends Operation{
     @Override
     Boolean operate() {
         return false;
