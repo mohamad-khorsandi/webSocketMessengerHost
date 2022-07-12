@@ -1,7 +1,7 @@
 package root.operation;
 
 public enum Command {
-    CREATE_WS("create-workspace"), DISCONNECT_WS("disconnect");
+    DISCONNECT_WS("disconnect"), SEND_MSG("send-message");
 
     public String str;
 

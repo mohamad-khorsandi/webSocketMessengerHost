@@ -1,5 +1,6 @@
 package root;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import root.utils.Utils;
 import root.utils.AutoFormatter;
 
@@ -25,7 +26,7 @@ public class Host {
         workspace.call();
         //todo : do this in while(cause multi req to serScanner problem)
     }
-
+    public static ObjectMapper objectMapper = new ObjectMapper();
     static String ip;
     static int firstPort;
     static int lastPort;

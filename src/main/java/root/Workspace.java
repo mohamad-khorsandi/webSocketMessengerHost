@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static root.Host.serReceive;
 import static root.Host.serSend;
@@ -53,6 +54,9 @@ public class Workspace implements Callable<Object>{
         }
         User user = new User();
         user.id = id;
+        user.send = send;
+        user.receive = receive;
+        user.workspace = this;
         send.format("username?");
         user.username = receive.next();
         send.format("OK");
@@ -63,15 +67,24 @@ public class Workspace implements Callable<Object>{
         boolean isConnected = true;
         while (isConnected){
             String cmd = receive.next();
-            isConnected = Operation.newOperation(cmd, send, receive).call();
+            isConnected = Operation.newOperation(this, user, cmd, send, receive).call();
         }
         Utils.closeAll(socket, send, receive);
     }
 
-    private void addUser(User user) {
+    public void addUser(User user) {
         if(user.id == null)
             throw new RuntimeException();
         userMap.put(user.id, user);
+    }
+
+    public User getUser(String username){
+        AtomicReference<User> user = new AtomicReference<>();
+        userMap.forEach((key, val) ->{
+            if (val.username.equals(username))
+                user.set(val);
+        });
+        return user.get();
     }
 }
 
