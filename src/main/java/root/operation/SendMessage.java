@@ -10,17 +10,16 @@ public class SendMessage extends Operation{
     @Override
     Boolean operate() throws JsonProcessingException {
         //2 ---------------------------------
-        String receiverUsername = receive.next();
-        String receiveJSON = receive.nextLine();
+        User otherUser = workspace.getUser(con.next());
+        String receiveJSON = con.nextLine();
         //3 ---------------------------------
-        int seq = user.chatList.addMsg(receiverUsername, receiveJSON);
-        send.format("OK %d", seq);
+        int seq = user.chatList.addMsg(otherUser, receiveJSON);
+        con.format("OK %d", seq);
         //4 ---------------------------------
-        User receiver = workspace.getUser(receiverUsername);
-        if (receiver == null)
+        if (otherUser == null)
             throw new RuntimeException();
-        String sendJSON = makeSendJSON(seq, receiverUsername, receiveJSON);
-        receiver.send.format("receive-message %s %s", user.username, sendJSON);
+        String sendJSON = makeSendJSON(seq, otherUser.username, receiveJSON);
+        otherUser.con.format("receive-message %s %s", user.username, sendJSON);
         return true;
     }
 
@@ -38,6 +37,7 @@ public class SendMessage extends Operation{
         tarMap.put("body", body);
 
         //todo wrong order
+        //todo use message class
         return objectMapper.writeValueAsString(tarMap);
     }
 }

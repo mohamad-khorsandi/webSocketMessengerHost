@@ -1,16 +1,15 @@
 package root;
 
 
-import root.utils.AutoFormatter;
+import root.utils.connections.NormalConnectionPack;
 
-import java.util.Scanner;
+import java.io.Serializable;
 
-public class User {
+public class User implements Serializable {
     public String username;
     public Integer id;
-    public Workspace workspace;
-    public Scanner receive;
-    public AutoFormatter send;
+
+    public NormalConnectionPack con;
 
     public ChatList chatList = new ChatList(this);
 

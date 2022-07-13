@@ -1,47 +1,62 @@
 package root;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import root.utils.Utils;
-import root.utils.AutoFormatter;
+import lombok.Getter;
+import root.fileInterface.FileInterface;
+import root.utils.connections.ConnectionPack;
+import root.utils.connections.NormalConnectionPack;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Host {
-    public static void main(String[] args) throws Exception{
-        ip = args[0];
-        firstPort = Integer.parseInt(args[1]);
-        lastPort = Integer.parseInt(args[2]);
-        socketToSer = new Socket("localhost", 8000);
-        serSend = new AutoFormatter(socketToSer.getOutputStream());
-        serReceive = new Scanner(socketToSer.getInputStream());
+public class Host implements Serializable {
+    void constructor(String ip, String firstPort, String lastPort) throws IOException {
+        this.ip = ip;
+        this.firstPort = Integer.parseInt(firstPort);
+        this.lastPort = Integer.parseInt(lastPort);
 
-        registerToServer();
-        Workspace workspace = createWorkspace();
+        serCon = ConnectionPack.newNormConnectionPack(ip, 8000);
+    }
+
+    public static void main(String[] args) throws Exception{
+        host = FileInterface.loadObject(args[0], args[1], args[2]);
+        if (host == null)
+            host = new Host();
+        host.constructor(args[0], args[1], args[2]);
+
+        host.registerToServer();
+        Workspace workspace = host.createWorkspace();
         workspace.call();
+
         //todo : do this in while(cause multi req to serScanner problem)
     }
-    public static ObjectMapper objectMapper = new ObjectMapper();
-    static String ip;
-    static int firstPort;
-    static int lastPort;
-    static Socket socketToSer;
-    public static AutoFormatter serSend;
-    public static Scanner serReceive;
-    public static ExecutorService executor = Executors.newCachedThreadPool();
+    static public Host host;
+    static public ObjectMapper objectMapper = new ObjectMapper();
+    static public ExecutorService executor = Executors.newCachedThreadPool();
+    ArrayList<Workspace> workspacesList = new ArrayList<>();
 
-    static void registerToServer() throws Exception {
+    @Getter
+    transient String ip;
+    @Getter
+    transient int firstPort;
+    @Getter
+    transient int lastPort;
+    transient NormalConnectionPack serCon;
+
+    void registerToServer() throws Exception {
         //1-------------------------------
-        serSend.format("create-host %s %d %d", ip, firstPort, lastPort);
+        serCon.format("create-host %s %d %d", ip, firstPort, lastPort);
         //2-------------------------------
-        Utils.throwIfResIsNotOK(serReceive);
+        serCon.throwIfResIsNotOK();
         //3-------------------------------
-        int randPort = serReceive.nextInt();
+        int randPort = serCon.nextInt();
         //4,5-------------------------------
         AtomicReference<String> testCode = new AtomicReference<>();
         Thread testListenerThread = new Thread(() -> {
@@ -53,25 +68,27 @@ public class Host {
         });
         testListenerThread.start();
         Thread.sleep(1);
-        serSend.format("check");
+        serCon.format("check");
         testListenerThread.join();
         //6-------------------------------
-        serSend.format(testCode.get());
+        serCon.format(testCode.get());
         //7,8-------------------------------
-        Utils.throwIfResIsNotOK(serReceive);
+        serCon.throwIfResIsNotOK();
     }
 
-    static Workspace createWorkspace(){
+    Workspace createWorkspace(){
         //3 -------------------------------
-        serReceive.next();//create-workspace
-        int port = serReceive.nextInt();
+        serCon.next();//create-workspace
+        int port = serCon.nextInt();
         User creator = new User();
-        creator.id = serReceive.nextInt();
+        creator.id = serCon.nextInt();
         //4 -------------------------------
         Workspace newWorkspace = new Workspace(port);
-        serSend.format("OK");
+        workspacesList.add(newWorkspace);
+        serCon.format("OK");
         return newWorkspace;
     }
+
     private static String receiveCodeOnPort(int port) throws IOException {
         //5-------------------------------
         String code;

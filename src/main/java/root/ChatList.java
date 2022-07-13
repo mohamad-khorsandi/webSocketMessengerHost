@@ -1,23 +1,17 @@
 package root;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import lombok.*;
 
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.IOException;;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 
 public class ChatList {
 
@@ -28,9 +22,8 @@ public class ChatList {
     User owner;
     private HashMap<User, Chat> userChatMap = new HashMap<>();
 
-    public int addMsg(String receiverName, String msgJSON) throws JsonProcessingException {
-        User receiver = owner.workspace.getUser(receiverName);
-        Chat chat = userChatMap.get(receiver);
+    public int addMsg(User otherUser, String msgJSON) throws JsonProcessingException {
+        Chat chat = userChatMap.get(otherUser);
         Message newMsg = new Message(msgJSON);
 
         if (chat != null){
@@ -38,11 +31,11 @@ public class ChatList {
             return seq;
         }
 
-        chat = new Chat(receiver);
+        chat = new Chat(otherUser);
         chat.addMsg(newMsg);
 
-        userChatMap.put(receiver, chat);
-        receiver.chatList.userChatMap.put(owner, chat);
+        userChatMap.put(otherUser, chat);
+        otherUser.chatList.userChatMap.put(owner, chat);
         return 1;
     }
 

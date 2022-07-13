@@ -1,21 +1,17 @@
 package root;
 
 import root.operation.Operation;
-import root.utils.AutoFormatter;
-import root.utils.Utils;
+import root.utils.connections.NormalConnectionPack;
+import root.utils.connections.ConnectionPack;
 
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Scanner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static root.Host.serReceive;
-import static root.Host.serSend;
+import static root.Host.host;
 
-
-public class Workspace implements Callable<Object>{
+public class Workspace implements Callable<Object>, Serializable {
     public Workspace(int port) {
         this.port = port;
     }
@@ -25,51 +21,46 @@ public class Workspace implements Callable<Object>{
 
     @Override
     public Object call() throws Exception {
-        ServerSocket serverSocket = new ServerSocket(port);
-        Socket clientSocket = serverSocket.accept();
-        Scanner clientReceive = new Scanner(clientSocket.getInputStream());
-        AutoFormatter clientSend = new AutoFormatter(clientSocket.getOutputStream());
 
-        User user = connectClient(clientSend, clientReceive);
+        NormalConnectionPack clientCon = ConnectionPack.newNormConnectionPack(port);
+
+        User user = connectClient(clientCon);
         addUser(user);
-        listenClientCmd(user, clientSocket, clientSend, clientReceive);
+        listenClientCmd(user, clientCon);
 
-        serverSocket.close();
         return null;
     }
 
-    private User connectClient(AutoFormatter send, Scanner receive) throws Exception {
+    private User connectClient(NormalConnectionPack con) throws Exception {
         //4 ---------------------------
-        receive.next();//connect
-        String token = receive.next();
+        con.next();//connect
+        String token = con.next();
         //5 ---------------------------
-        serSend.format("whois %s", token);
+        host.serCon.format("whois %s", token);
         //6 ---------------------------
-        Utils.throwIfResIsNotOK(serReceive);
-        int id = serReceive.nextInt();
+        host.serCon.throwIfResIsNotOK();
+        int id = host.serCon.nextInt();
         //7,8,9 ---------------------------
         if (userMap.containsKey(id)) {
-            send.format("OK");
+            con.format("OK");
             return userMap.get(id);
         }
         User user = new User();
         user.id = id;
-        user.send = send;
-        user.receive = receive;
-        user.workspace = this;
-        send.format("username?");
-        user.username = receive.next();
-        send.format("OK");
+        user.con = con;
+        con.format("username?");
+        user.username = con.next();
+        con.format("OK");
         return user;
     }
 
-    private void listenClientCmd(User user, Socket socket, AutoFormatter send, Scanner receive) throws Exception {
+    private void listenClientCmd(User user, NormalConnectionPack con) throws Exception {
         boolean isConnected = true;
         while (isConnected){
-            String cmd = receive.next();
-            isConnected = Operation.newOperation(this, user, cmd, send, receive).call();
+            String cmd = con.next();
+            isConnected = Operation.newOperation(this, user, cmd).call();
         }
-        Utils.closeAll(socket, send, receive);
+        con.close();
     }
 
     public void addUser(User user) {
@@ -87,4 +78,3 @@ public class Workspace implements Callable<Object>{
         return user.get();
     }
 }
-

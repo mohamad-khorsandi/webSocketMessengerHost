@@ -1,4 +1,4 @@
-package root.utils;
+package root.utils.connections;
 
 import java.io.Closeable;
 import java.io.OutputStream;
