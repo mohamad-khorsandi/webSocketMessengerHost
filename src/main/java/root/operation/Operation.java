@@ -6,7 +6,7 @@ import root.utils.connections.NormalConnectionPack;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
-abstract public class Operation implements Callable<Boolean> {
+abstract public class Operation implements Callable<Void> {
 
     public static Operation newOperation (Workspace workspace, User user, String strCmd){
         Command cmd = Objects.requireNonNull(Command.type(strCmd));
@@ -37,17 +37,19 @@ abstract public class Operation implements Callable<Boolean> {
         operation.con = user.con;
         return operation;
     }
+
     Workspace workspace;
     User user;
     String cmd;
     NormalConnectionPack con;
 
     @Override
-    public Boolean call() throws Exception {
-        boolean keepCon = operate();
+    public Void call() throws Exception {
+        operate();
         System.out.println(cmd + " was successful");
-        return keepCon;
+        return null;
     }
 
-    abstract Boolean operate() throws Exception;
-}
+    abstract void operate() throws Exception;
+
+ }

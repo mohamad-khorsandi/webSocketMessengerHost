@@ -3,6 +3,10 @@ package root.utils.connections;
 import java.util.Scanner;
 
 public class NormalConnectionPack extends ConnectionPack {
+    protected NormalConnectionPack() {
+
+    }
+
     public Scanner receive;
 
     public String next() {

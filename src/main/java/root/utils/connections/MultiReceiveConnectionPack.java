@@ -3,6 +3,9 @@ package root.utils.connections;
 import java.util.concurrent.ExecutionException;
 
 public class MultiReceiveConnectionPack extends ConnectionPack {
+    protected MultiReceiveConnectionPack() {
+    }
+
     MultiReceiveScanner receive;
 
     public String next() throws ExecutionException, InterruptedException {

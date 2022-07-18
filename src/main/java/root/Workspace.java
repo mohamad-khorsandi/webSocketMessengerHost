@@ -7,8 +7,10 @@ import root.utils.connections.ConnectionPack;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static root.Host.executor;
 import static root.Host.host;
 
 public class Workspace implements Callable<Object>, Serializable {
@@ -21,17 +23,16 @@ public class Workspace implements Callable<Object>, Serializable {
 
     @Override
     public Object call() throws Exception {
+        while (true){
+            NormalConnectionPack clientCon = ConnectionPack.newNormConnectionPack(port);
 
-        NormalConnectionPack clientCon = ConnectionPack.newNormConnectionPack(port);
+            Future<User> futureUser = executor.submit(() -> listenForConnectClient(clientCon));
 
-        User user = connectClient(clientCon);
-        addUser(user);
-        listenClientCmd(user, clientCon);
-
-        return null;
+            executor.submit(() -> listenClientCmd(futureUser.get(), clientCon));
+        }
     }
 
-    private User connectClient(NormalConnectionPack con) throws Exception {
+    private User listenForConnectClient(NormalConnectionPack con) throws Exception {
         //4 ---------------------------
         con.next();//connect
         String token = con.next();
@@ -45,22 +46,23 @@ public class Workspace implements Callable<Object>, Serializable {
             con.format("OK");
             return userMap.get(id);
         }
-        User user = new User();
-        user.id = id;
-        user.con = con;
+
         con.format("username?");
-        user.username = con.next();
+        String username = con.next();
+
+        User user = new User(username, id, true, con);
+        addUser(user);
+
         con.format("OK");
         return user;
     }
 
-    private void listenClientCmd(User user, NormalConnectionPack con) throws Exception {
-        boolean isConnected = true;
-        while (isConnected){
+    private Void listenClientCmd(User user, NormalConnectionPack con) throws Exception {
+        while (user.isConnected){
             String cmd = con.next();
-            isConnected = Operation.newOperation(this, user, cmd).call();
+            Operation.newOperation(this, user, cmd).call();
         }
-        con.close();
+        return null;
     }
 
     public void addUser(User user) {

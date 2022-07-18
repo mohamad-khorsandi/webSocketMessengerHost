@@ -9,11 +9,12 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import lombok.*;
 
-import java.io.IOException;;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class ChatList {
+public class ChatList implements Serializable {
 
     public ChatList(User user) {
         this.owner = user;
@@ -82,8 +83,9 @@ public class ChatList {
         Chat chatWithU2 = this.userChatMap.get(otherUser);
         chatWithU2.markAsRead();
     }
+
     @Data
-    static class Chat{
+    static class Chat implements Serializable{
         public Chat(User user) {
             this.otherUser = user;
         }
@@ -108,7 +110,7 @@ public class ChatList {
 
     @Data
     @NoArgsConstructor
-    static class Message{
+    static class Message implements Serializable{
         public Message(String type, String body) {
             this.type = type;
             this.body = body;

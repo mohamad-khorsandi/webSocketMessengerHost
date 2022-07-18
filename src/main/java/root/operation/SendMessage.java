@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class SendMessage extends Operation{
     @Override
-    Boolean operate() throws JsonProcessingException {
+    void operate() throws JsonProcessingException {
         //2 ---------------------------------
         User otherUser = workspace.getUser(con.next());
         String receiveJSON = con.nextLine();
@@ -20,7 +20,6 @@ public class SendMessage extends Operation{
             throw new RuntimeException();
         String sendJSON = makeSendJSON(seq, otherUser.username, receiveJSON);
         otherUser.con.format("receive-message %s %s", user.username, sendJSON);
-        return true;
     }
 
     public static String makeSendJSON(int seq, String from, String receivedJSON) throws JsonProcessingException {
